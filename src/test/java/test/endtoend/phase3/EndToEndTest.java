@@ -22,15 +22,14 @@ public class EndToEndTest {
 	// Declare Class level variables
 	Response response;
 	RequestSpecification request;
-	
 	String uri = "http://localhost:3000";
 	String end_point = "employees";
-	int emp_id;
 	
 	@Test
 	public void Test1() {
-		// Create Hash Map object to pass data to methods
+		// Create Hash Map object and variable for employee id
 		Map<String, Object> MapObj = new HashMap<String, Object>();
+		int emp_id;
 		
 		// Get all employees and validate for status code 200
 		Assert.assertEquals(GetAllEmployees().getStatusCode(), 200);
@@ -46,25 +45,29 @@ public class EndToEndTest {
 		
 		// Get single employee created earlier and validate
 		// the name is John and status code is 200.
-		String ResponseBody = GetSingleEmployee().getBody().asString();
-		Assert.assertTrue(ResponseBody.contains("John"));
+		Assert.assertTrue(GetSingleEmployee(emp_id).body().asString().contains("John"));
 		Assert.assertEquals(response.getStatusCode(), 200);
-		
+
 		// Update the employee created earlier to change the name 
 		// to Smith	and validate the status code is 200.
 		MapObj.put("id", emp_id);
 		MapObj.put("name", "Smith");
 		MapObj.put("salary", "8000");
 		Assert.assertEquals(UpdateEmployee(MapObj).getStatusCode(), 200);
+
+		// Get single employee name changed to "Smith" earlier
+		// and validate the name is Smith and status code is 200.
+		Assert.assertTrue(GetSingleEmployee(emp_id).body().asString().contains("Smith"));
+		Assert.assertEquals(response.getStatusCode(), 200);
 		
 		// Delete the employee created earlier and validate 
 		// the status code is 200.
-		Assert.assertEquals(DeleteEmployee().getStatusCode(), 200);
+		Assert.assertEquals(DeleteEmployee(emp_id).getStatusCode(), 200);
 
 		// Get single employee created earlier and validate
 		// the status code is 404.
-		Assert.assertEquals(GetSingleEmployee().getStatusCode(), 404);
-		
+		Assert.assertEquals(GetSingleEmployee(emp_id).getStatusCode(), 404);
+
 		// Get All Employees and validate that deleted employee
 		// earlier is not present in the response.
 		Assert.assertFalse(GetAllEmployees().body().asString().contains("Smith"));
@@ -77,7 +80,7 @@ public class EndToEndTest {
 		return response ;
 	}
 	
-	public Response GetSingleEmployee() {
+	public Response GetSingleEmployee(int emp_id) {
 		RestAssured.baseURI = uri;
 		request = RestAssured.given();
 		response = request.get(end_point+"/"+emp_id);
@@ -102,11 +105,11 @@ public class EndToEndTest {
 				.contentType(ContentType.JSON)
 				.accept(ContentType.JSON)
 				.body(mapObj)
-				.put(end_point+"/"+emp_id);
+				.put(end_point+"/"+mapObj.get("id"));
 		return response ;
 	}	
 	
-	public Response DeleteEmployee() {
+	public Response DeleteEmployee(int emp_id) {
 		RestAssured.baseURI = uri;
 		request = RestAssured.given();
 		response = request.delete(end_point+"/"+emp_id);
